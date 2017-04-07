@@ -1,0 +1,4 @@
+services:
+  alipay.config:
+    class: Drupal\alipay\AlipayConfigService
+    arguments: []

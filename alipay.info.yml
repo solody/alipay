@@ -1,5 +1,5 @@
 name: Alipay
 type: module
-description: Best Drupal payment module for chinese.[D, include alipay and wechat.
+description: Best Drupal payment module for chinese, include alipay and wechat.
 core: 8.x
 package: Hunter

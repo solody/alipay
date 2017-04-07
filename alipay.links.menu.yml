@@ -1,0 +1,7 @@
+alipay.alipay_setting_form:
+  title: 'Alipay Setting'
+  route_name: alipay.alipay_setting_form
+  description: 'Config for Alipay.'
+  parent: system.admin_config_system
+  weight: 99
+
