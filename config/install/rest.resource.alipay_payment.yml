@@ -2,11 +2,11 @@ langcode: zh-hans
 status: true
 dependencies:
   module:
+    - alipay
     - basic_auth
     - serialization
     - simple_oauth
     - user
-    - alipay
 id: alipay_payment
 plugin_id: alipay_payment
 granularity: resource
