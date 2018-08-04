@@ -6,6 +6,7 @@ package: Custom
 dependencies:
   - alipay
   - basic_auth
+  - finance
   - rest
   - serialization
   - simple_oauth
