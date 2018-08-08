@@ -111,7 +111,7 @@ class AlipayPayment extends ResourceBase {
     }
 
     $commerce_order = Order::load($data['cart_id']);
-    if (!$commerce_order->get('cart')->value) {
+    if ($commerce_order->get('state')->value !== 'draft') {
       throw new BadRequestHttpException('订单不符合支付条件，只能支付未下单(place)的订单。');
     }
     $commerce_order->set('payment_gateway', $payment_gateway);
