@@ -98,7 +98,7 @@ class Alipay extends TransferGatewayBase {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function transfer(WithdrawInterface $withdraw) {
-    return true; // 直接成功，方便测试
+    //return true; // 直接成功，方便测试
     $transfer = $this->getSDK();
 
     /** @var AopTransferToAccountRequest $request */
@@ -107,7 +107,7 @@ class Alipay extends TransferGatewayBase {
       'out_biz_no'      => $withdraw->id(),
       'payee_type' => 'ALIPAY_LOGONID',
       'payee_account' => $withdraw->getTransferMethod()->get('alipay_account')->value,
-      'amount' => $withdraw->getAmount()->getNumber(),
+      'amount' => '0.1',//$withdraw->getAmount()->getNumber(),
       'payer_show_name' => \Drupal::config('system.site')->get('name') . '：' . $withdraw->getName(),
       'payee_real_name' => $withdraw->getTransferMethod()->get('alipay_name')->value,
       'remark' => $withdraw->getName()
@@ -117,6 +117,10 @@ class Alipay extends TransferGatewayBase {
     $response = $request->send();
 
     if (!$response->isSuccessful()) \Drupal::logger('alipay')->error(var_export($response->getData(), true));
+    else {
+      $order_id = $response->data('alipay_fund_trans_toaccount_transfer_response.order_id');
+      $withdraw->setTransactionNumber($order_id);
+    }
 
     return $response->isSuccessful();
   }
