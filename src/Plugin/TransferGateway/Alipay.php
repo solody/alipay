@@ -116,8 +116,14 @@ class Alipay extends TransferGatewayBase {
     /** @var AopTransferToAccountResponse $response */
     $response = $request->send();
 
-    if (!$response->isSuccessful()) \Drupal::logger('alipay')->error(var_export($response->getData(), true));
-    else {
+    if (!$response->isSuccessful()) {
+      \Drupal::logger('alipay')->notice(var_export($response->getData(), true));
+      throw new \Exception(
+        $response->data('alipay_fund_trans_toaccount_transfer_response.code'). ' '.
+        $response->data('alipay_fund_trans_toaccount_transfer_response.msg'). ' '.
+        $response->data('alipay_fund_trans_toaccount_transfer_response.sub_code'). ' '.
+        $response->data('alipay_fund_trans_toaccount_transfer_response.sub_msg'));
+    } else {
       $order_id = $response->data('alipay_fund_trans_toaccount_transfer_response.order_id');
       $withdraw->setTransactionNumber($order_id);
     }
