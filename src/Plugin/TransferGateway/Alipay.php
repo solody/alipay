@@ -107,7 +107,7 @@ class Alipay extends TransferGatewayBase {
       'out_biz_no'      => $withdraw->id(),
       'payee_type' => 'ALIPAY_LOGONID',
       'payee_account' => $withdraw->getTransferMethod()->get('alipay_account')->value,
-      'amount' => $withdraw->getAmount()->getNumber(),
+      'amount' => round($withdraw->getAmount()->getNumber(), 2),
       'payer_show_name' => \Drupal::config('system.site')->get('name') . '：' . $withdraw->getName(),
       'payee_real_name' => $withdraw->getTransferMethod()->get('alipay_name')->value,
       'remark' => $withdraw->getName()
