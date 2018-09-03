@@ -138,7 +138,6 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
         throw new \Exception('未实现的客户端类型');
     }
 
-    $request = $this->getOmniGateway()->completePurchase();
     $request->setParams($_POST);//Optional
 
     /** @var AopCompletePurchaseResponse $response */
