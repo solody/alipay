@@ -11,3 +11,4 @@ dependencies:
   - serialization
   - simple_oauth
   - user
+  - commerce_price

@@ -2,6 +2,7 @@
 
 namespace Drupal\alipay\Plugin\TransferGateway;
 
+use Drupal\commerce_price\Price;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Console\Bootstrap\Drupal;
 use Drupal\Core\Form\FormStateInterface;
@@ -98,19 +99,31 @@ class Alipay extends TransferGatewayBase {
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
   public function transfer(WithdrawInterface $withdraw) {
-    //return true; // 直接成功，方便测试
+    // return true; // 直接成功，方便测试
     $transfer = $this->getSDK();
 
     /** @var AopTransferToAccountRequest $request */
     $request = $transfer->transfer();
+
+    // 计算手续费
+    $fee = $withdraw->getAmount()->multiply('0.007');
+    $fee = new Price((string)(ceil($fee->getNumber() * 100) / 100), $fee->getCurrencyCode());
+
+    $amount = $withdraw->getAmount();
+    $remark = $withdraw->getName();
+    if (!$fee->isZero()) {
+      $amount = $amount->subtract($fee);
+      $remark .= '(已扣除手续费'.$this->getCurrencyFormatter()->format($fee->getNumber(), $fee->getCurrencyCode()).')';
+    }
+
     $request->setBizContent([
-      'out_biz_no'      => $withdraw->id(),
+      'out_biz_no'      => $withdraw->id() . '-' . time(),
       'payee_type' => 'ALIPAY_LOGONID',
       'payee_account' => $withdraw->getTransferMethod()->get('alipay_account')->value,
-      'amount' => round($withdraw->getAmount()->getNumber(), 2),
+      'amount' => round($amount->getNumber(), 2),
       'payer_show_name' => \Drupal::config('system.site')->get('name') . '：' . $withdraw->getName(),
       'payee_real_name' => $withdraw->getTransferMethod()->get('alipay_name')->value,
-      'remark' => $withdraw->getName()
+      'remark' => $remark
     ]);
 
     /** @var AopTransferToAccountResponse $response */
@@ -129,6 +142,13 @@ class Alipay extends TransferGatewayBase {
     }
 
     return $response->isSuccessful();
+  }
+
+  /**
+   * @return \CommerceGuys\Intl\Formatter\CurrencyFormatterInterface
+   */
+  private function getCurrencyFormatter() {
+    return \Drupal::getContainer()->get('commerce_price.currency_formatter');
   }
 
   /**
