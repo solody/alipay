@@ -1,0 +1,6 @@
+alipay.seeting:
+  title: '支付宝基本设置'
+  route_name: alipay.alipay_settings_form
+  description: '支付宝基本设置。'
+  parent: system.admin_config
+  weight: 0

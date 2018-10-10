@@ -1,0 +1,3 @@
+transfer_poundage:
+  enable: 0
+  percentage: '0.7'

@@ -105,13 +105,16 @@ class Alipay extends TransferGatewayBase {
     /** @var AopTransferToAccountRequest $request */
     $request = $transfer->transfer();
 
+
+    $config = \Drupal::config('alipay.settings');
+
     // 计算手续费
-    $fee = $withdraw->getAmount()->multiply('0.007');
+    $fee = $withdraw->getAmount()->multiply((string)((float)$config->get('transfer_poundage.percentage') / 100));
     $fee = new Price((string)(ceil($fee->getNumber() * 100) / 100), $fee->getCurrencyCode());
 
     $amount = $withdraw->getAmount();
     $remark = $withdraw->getName();
-    if (!$fee->isZero()) {
+    if ($config->get('transfer_poundage.enable') && !$fee->isZero()) {
       $amount = $amount->subtract($fee);
       $remark .= '(已扣除手续费'.$this->getCurrencyFormatter()->format($fee->getNumber(), $fee->getCurrencyCode()).')';
     }
