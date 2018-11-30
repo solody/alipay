@@ -238,11 +238,14 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
       $order_item_names .= $order_item->getTitle() . ', ';
     }
 
+    $total_fee = $commerce_order->getTotalPrice()->getNumber();
+    if ($this->getMode() === 'test') $total_fee = '0.01';
+
     $request->setBizContent([
       'subject'      => mb_substr(\Drupal::config('system.site')->get('name') . $this->t(' Order: ') . $commerce_order->getOrderNumber(), 0, 256),
       'body' => mb_substr($order_item_names, 0, 128),
       'out_trade_no' => $commerce_order->id() . '-' . $payment->id() . '-' .date('YmdHis') . mt_rand(1000, 9999), // 商户网站唯一订单号
-      'total_amount' => '0.01',
+      'total_amount' => $total_fee,
       'product_code' => 'QUICK_MSECURITY_PAY', // 销售产品码，商家和支付宝签约的产品码，为固定值QUICK_MSECURITY_PAY
     ]);
 
