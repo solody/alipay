@@ -1,12 +1,12 @@
-langcode: zh-hans
+langcode: en
 status: true
 dependencies:
   module:
-    - alipay
-    - basic_auth
-    - serialization
-    - simple_oauth
-    - user
+    - alipay:alipay
+    - drupal:basic_auth
+    - drupal:serialization
+    - simple_oauth:simple_oauth
+    - drupal:user
 id: alipay_payment
 plugin_id: alipay_payment
 granularity: resource

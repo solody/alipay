@@ -1,14 +1,14 @@
 name: Alipay
 type: module
-description: 'My Awesome Module'
+description: 'Provide alipay functionality.'
 core: 8.x
-package: Custom
+package: Alipay
 dependencies:
-  - alipay
-  - basic_auth
-  - finance
-  - rest
-  - serialization
-  - simple_oauth
-  - user
-  - commerce_price
+  - alipay:alipay
+  - drupal:basic_auth
+  - finance:finance
+  - drupal:rest
+  - drupal:serialization
+  - simple_oauth:simple_oauth
+  - drupal:user
+  - commerce:commerce_price

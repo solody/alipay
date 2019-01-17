@@ -17,7 +17,7 @@ use Omnipay\Omnipay;
 /**
  * @TransferGateway(
  *   id = "alipay",
- *   label = @Translation("Alipay")
+ *   label = @Translation("Alipay Transfer")
  * )
  */
 class Alipay extends TransferGatewayBase {
@@ -26,7 +26,8 @@ class Alipay extends TransferGatewayBase {
    */
   public function buildFieldDefinitions() {
     $fields['alipay_account'] = BundleFieldDefinition::create('string')
-      ->setLabel(t('转账目标账号'))
+      ->setLabel(t('Account'))
+      ->setDescription(t('account of the transfer target.'))
       ->setDisplayOptions('view', [
         'label' => 'inline',
         'type' => 'string',
@@ -34,7 +35,8 @@ class Alipay extends TransferGatewayBase {
       ]);
 
     $fields['alipay_name'] = BundleFieldDefinition::create('string')
-      ->setLabel(t('转账目标姓名'))
+      ->setLabel(t('Name'))
+      ->setDescription(t('Real name of the transfer target.'))
       ->setDisplayOptions('view', [
         'label' => 'inline',
         'type' => 'string',
@@ -52,7 +54,7 @@ class Alipay extends TransferGatewayBase {
     $form['app_id'] = [
       '#type' => 'textfield',
       '#title' => $this->t('App ID'),
-      '#description' => $this->t('绑定支付的APP ID'),
+      '#description' => $this->t('APP ID'),
       '#default_value' => $this->configuration['app_id'],
       '#required' => TRUE,
     ];
@@ -94,9 +96,10 @@ class Alipay extends TransferGatewayBase {
 
   /**
    * 转账
+   *
    * @param WithdrawInterface $withdraw
    * @return bool
-   * @throws \Drupal\Core\TypedData\Exception\MissingDataException
+   * @throws \Exception
    */
   public function transfer(WithdrawInterface $withdraw) {
     // return true; // 直接成功，方便测试

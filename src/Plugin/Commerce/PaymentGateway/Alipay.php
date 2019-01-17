@@ -19,7 +19,7 @@ use Omnipay\Omnipay;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * 支付支付
+ * Alipay CommercePaymentGateway plugin.
  *
  * @CommercePaymentGateway(
  *   id = "alipay",
@@ -39,9 +39,9 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
 
     $form['client_type'] = [
       '#type' => 'radios',
-      '#title' => $this->t('调用此支付网关的应用类型'),
+      '#title' => $this->t('Application type to use this gateway.'),
       '#options' => [
-        self::CLIENT_TYPE_NATIVE_APP => '原生移动应用'
+        self::CLIENT_TYPE_NATIVE_APP => $this->t('Native mobile app')
       ],
       '#default_value' => $this->configuration['client_type'],
       '#required' => TRUE
@@ -50,7 +50,7 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
     $form['app_id'] = [
       '#type' => 'textfield',
       '#title' => $this->t('App ID'),
-      '#description' => $this->t('绑定支付的APP ID'),
+      '#description' => $this->t('Alipay created App ID.'),
       '#default_value' => $this->configuration['app_id'],
       '#required' => TRUE,
     ];
@@ -123,6 +123,7 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
   /**
    * {@inheritdoc}
    * @throws \EasyWeChat\Core\Exceptions\FaultException
+   * @throws \Exception
    */
   public function onNotify(Request $request) {
     \Drupal::logger('alipay')->notice('接收到来自支付宝的通知：' . print_r($_POST, TRUE));
@@ -162,7 +163,7 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
 
         /** @var \Drupal\commerce_payment\Entity\Payment $payment_entity */
         $payment_entity = Payment::load($payment_id);
-        $order = \Drupal\commerce_order\Entity\Order::load($order_id);
+        $order = Order::load($order_id);
         if ($payment_entity && (int)$payment_entity->getOrderId() === (int)$order_id) {
           $payment_entity->setState('completed');
           $payment_entity->setRemoteId($_POST['trade_no']);
@@ -192,9 +193,10 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
    * @param \Drupal\commerce_order\Entity\Order $commerce_order
    * @return Payment
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
-  public function createPayment(\Drupal\commerce_order\Entity\Order $commerce_order) {
+  public function createPayment(Order $commerce_order) {
     /** @var \Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayInterface $payment_gateway_plugin */
     $payment_storage = $this->entityTypeManager->getStorage('commerce_payment');
 
