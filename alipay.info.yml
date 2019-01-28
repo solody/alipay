@@ -6,7 +6,7 @@ package: Alipay
 dependencies:
   - alipay:alipay
   - drupal:basic_auth
-  - finance:finance
+  - account:account
   - drupal:rest
   - drupal:serialization
   - simple_oauth:simple_oauth
