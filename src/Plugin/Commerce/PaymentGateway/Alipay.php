@@ -43,7 +43,7 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
       '#options' => [
         self::CLIENT_TYPE_NATIVE_APP => $this->t('Native mobile app')
       ],
-      '#default_value' => $this->configuration['client_type'],
+      '#default_value' => isset($this->configuration['client_type']) ? $this->configuration['client_type'] : self::CLIENT_TYPE_NATIVE_APP,
       '#required' => TRUE
     ];
 
@@ -51,7 +51,7 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
       '#type' => 'textfield',
       '#title' => $this->t('App ID'),
       '#description' => $this->t('Alipay created App ID.'),
-      '#default_value' => $this->configuration['app_id'],
+      '#default_value' => isset($this->configuration['app_id']) ? $this->configuration['app_id'] : '',
       '#required' => TRUE,
     ];
 
@@ -59,14 +59,14 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
       '#type' => 'textfield',
       '#title' => $this->t('Private key path'),
       '#description' => $this->t('The app private key'),
-      '#default_value' => $this->configuration['app_private_key_path']
+      '#default_value' => isset($this->configuration['app_private_key_path']) ? $this->configuration['app_private_key_path'] : ''
     ];
 
     $form['alipay_public_key_path'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Public key path'),
       '#description' => $this->t('The alipay public key'),
-      '#default_value' => $this->configuration['alipay_public_key_path']
+      '#default_value' => isset($this->configuration['alipay_public_key_path']) ? $this->configuration['alipay_public_key_path'] : ''
     ];
 
     return $form;

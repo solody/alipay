@@ -6,8 +6,8 @@ use Drupal\commerce_price\Price;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Console\Bootstrap\Drupal;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\finance\Entity\WithdrawInterface;
-use Drupal\finance\Plugin\TransferGatewayBase;
+use Drupal\account\Entity\WithdrawInterface;
+use Drupal\account\Plugin\TransferGatewayBase;
 use Drupal\entity\BundleFieldDefinition;
 use Omnipay\Alipay\AopAppGateway;
 use Omnipay\Alipay\Requests\AopTransferToAccountRequest;
@@ -55,7 +55,7 @@ class Alipay extends TransferGatewayBase {
       '#type' => 'textfield',
       '#title' => $this->t('App ID'),
       '#description' => $this->t('APP ID'),
-      '#default_value' => $this->configuration['app_id'],
+      '#default_value' => isset($this->configuration['app_id']) ? $this->configuration['app_id'] : '',
       '#required' => TRUE,
     ];
 
@@ -63,14 +63,14 @@ class Alipay extends TransferGatewayBase {
       '#type' => 'textfield',
       '#title' => $this->t('Private key path'),
       '#description' => $this->t('The app private key'),
-      '#default_value' => $this->configuration['app_private_key_path']
+      '#default_value' => isset($this->configuration['app_private_key_path']) ? $this->configuration['app_private_key_path'] : ''
     ];
 
     $form['alipay_public_key_path'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Public key path'),
       '#description' => $this->t('The alipay public key'),
-      '#default_value' => $this->configuration['alipay_public_key_path']
+      '#default_value' => isset($this->configuration['alipay_public_key_path']) ? $this->configuration['alipay_public_key_path'] : ''
     ];
 
     return $form;

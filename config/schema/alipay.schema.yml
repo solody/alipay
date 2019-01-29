@@ -14,7 +14,7 @@ commerce_payment.commerce_payment_gateway.plugin.alipay:
       type: string
       label: 'The alipay public key'
 
-finance.finance_transfer_gateway.plugin.alipay:
+account.account_transfer_gateway.plugin.alipay:
   type: mapping
   mapping:
     app_id:

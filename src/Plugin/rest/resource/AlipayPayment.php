@@ -70,7 +70,7 @@ class AlipayPayment extends ResourceBase {
       $plugin_id,
       $plugin_definition,
       $container->getParameter('serializer.formats'),
-      $container->get('logger.factory')->get('commerce_checkout_api'),
+      $container->get('logger.factory')->get('alipay'),
       $container->get('current_user')
     );
   }

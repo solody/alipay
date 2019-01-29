@@ -2,7 +2,7 @@ name: Alipay
 type: module
 description: 'Provide alipay functionality.'
 core: 8.x
-package: Alipay
+package: Finance
 dependencies:
   - alipay:alipay
   - drupal:basic_auth
