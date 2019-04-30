@@ -4,11 +4,6 @@ description: 'Provide alipay functionality.'
 core: 8.x
 package: Finance
 dependencies:
-  - alipay:alipay
-  - drupal:basic_auth
-  - account:account
-  - drupal:rest
-  - drupal:serialization
-  - simple_oauth:simple_oauth
-  - drupal:user
   - commerce:commerce_price
+  - commerce:commerce_payment
+  - commerce:commerce_order
