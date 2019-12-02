@@ -11,6 +11,7 @@
     "source": "http://cgit.drupalcode.org/alipay"
   },
   "require": {
-    "lokielse/omnipay-alipay": "^3.0"
+    "lokielse/omnipay-alipay": "^3.0",
+    "tecnickcom/tc-lib-barcode": "^1.15"
   }
 }

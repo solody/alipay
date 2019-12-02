@@ -12,6 +12,7 @@ use Drupal\commerce_price\Price;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\alipay\AlipayGatewayInterface;
+use Drupal\facets\Exception\Exception;
 use Omnipay\Alipay\AopAppGateway;
 use Omnipay\Alipay\Responses\AopCompletePurchaseResponse;
 use Omnipay\Alipay\Responses\AopTradeAppPayResponse;
@@ -24,7 +25,10 @@ use Symfony\Component\HttpFoundation\Request;
  * @CommercePaymentGateway(
  *   id = "alipay",
  *   label = "Alipay",
- *   display_label = "Alipay"
+ *   display_label = "Alipay",
+ *   forms = {
+ *     "offsite-payment" = "Drupal\alipay\PluginForm\QRCodePaymentForm",
+ *   }
  * )
  */
 class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterface, AlipayGatewayInterface {
@@ -41,7 +45,9 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
       '#type' => 'radios',
       '#title' => $this->t('Application type to use this gateway.'),
       '#options' => [
-        self::CLIENT_TYPE_NATIVE_APP => $this->t('Native mobile app')
+        self::CLIENT_TYPE_WEBSITE => $this->t('Website payment.'),
+        self::CLIENT_TYPE_NATIVE_APP => $this->t('Native mobile app'),
+        self::CLIENT_TYPE_FACE_TO_FACE => $this->t('Face to face payment')
       ],
       '#default_value' => isset($this->configuration['client_type']) ? $this->configuration['client_type'] : self::CLIENT_TYPE_NATIVE_APP,
       '#required' => TRUE
@@ -99,7 +105,7 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
    */
   public function getOmniGateway($type) {
     /** @var AopAppGateway $gateway */
-    $gateway = Omnipay::create('Alipay_AopApp');
+    $gateway = Omnipay::create($type);
     $gateway->setSignType('RSA2'); //RSA/RSA2
 
     $gateway->setAppId($this->getConfiguration()['app_id']);
@@ -213,6 +219,61 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
     return $payment;
   }
 
+  public function requestRedirectUrl($commerce_order, &$payment) {
+
+    $client_type = $this->getConfiguration()['client_type'];
+    if ($client_type !== self::CLIENT_TYPE_WEBSITE) {
+      throw new \Exception('requestQRCode only support [' . self::CLIENT_TYPE_WEBSITE . '] client type.');
+    }
+
+    $request = $this->getOmniGateway('Alipay_AopPage')->purchase();
+
+    $payment = $this->createPayment($commerce_order);
+    $data = [
+      'product_code' => 'FAST_INSTANT_TRADE_PAY'
+    ];
+    $request->setBizContent($this->getBizContent($commerce_order, $payment, $data));
+
+    /** @var \Omnipay\Alipay\Responses\AopTradePreCreateResponse $response */
+    $response = $request->send();
+
+    return $response->getRedirectUrl();
+  }
+
+  /**
+   *
+   * @param $commerce_order
+   * @param $payment
+   * @return void
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   */
+  public function requestQRCode($commerce_order, &$payment) {
+
+    $client_type = $this->getConfiguration()['client_type'];
+    if ($client_type !== self::CLIENT_TYPE_FACE_TO_FACE) {
+      throw new \Exception('requestQRCode only support [' . self::CLIENT_TYPE_FACE_TO_FACE . '] client type.');
+    }
+
+    $request = $this->getOmniGateway('Alipay_AopF2F')->purchase();
+
+    $payment = $this->createPayment($commerce_order);
+    $data = [
+      'scene' => 'bar_code'
+    ];
+    $request->setBizContent($this->getBizContent($commerce_order, $payment, $data));
+
+    /** @var \Omnipay\Alipay\Responses\AopTradePreCreateResponse $response */
+    $response = $request->send();
+
+    if ($response->getCode() === 1000) {
+      return $response->getQrCode();
+    } else {
+      throw new Exception($response->getMessage());
+    }
+  }
+
   /**
    * @param Order $commerce_order
    * @return null
@@ -234,6 +295,22 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
 
     $payment = $this->createPayment($commerce_order);
 
+    $data = [
+      'product_code' => 'QUICK_MSECURITY_PAY'
+    ];
+    $request->setBizContent($this->getBizContent($commerce_order, $payment, $data));
+
+    /** @var AopTradeAppPayResponse $response */
+    $response = $request->send();
+    $orderString = $response->getOrderString();
+
+    $config['order_string'] = $orderString;
+
+    return $config;
+  }
+
+  private function getBizContent($commerce_order, $payment, &$data) {
+
     $order_item_names = '';
     foreach ($commerce_order->getItems() as $order_item) {
       /** @var OrderItem $order_item */
@@ -243,20 +320,11 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
     $total_fee = $commerce_order->getTotalPrice()->getNumber();
     if ($this->getMode() === 'test') $total_fee = '0.01';
 
-    $request->setBizContent([
+    return $data + [
       'subject'      => mb_substr(\Drupal::config('system.site')->get('name') . $this->t(' Order: ') . $commerce_order->getOrderNumber(), 0, 256),
-      'body' => mb_substr($order_item_names, 0, 128),
+      'body'         => mb_substr($order_item_names, 0, 128),
       'out_trade_no' => $commerce_order->id() . '-' . $payment->id() . '-' .date('YmdHis') . mt_rand(1000, 9999), // 商户网站唯一订单号
-      'total_amount' => $total_fee,
-      'product_code' => 'QUICK_MSECURITY_PAY', // 销售产品码，商家和支付宝签约的产品码，为固定值QUICK_MSECURITY_PAY
-    ]);
-
-    /** @var AopTradeAppPayResponse $response */
-    $response = $request->send();
-    $orderString = $response->getOrderString();
-
-    $config['order_string'] = $orderString;
-
-    return $config;
+      'total_amount' => $total_fee
+    ];
   }
 }
