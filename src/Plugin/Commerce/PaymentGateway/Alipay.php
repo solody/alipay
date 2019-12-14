@@ -75,6 +75,27 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
       '#default_value' => isset($this->configuration['alipay_public_key_path']) ? $this->configuration['alipay_public_key_path'] : ''
     ];
 
+    $form['app_cert_public_key_path'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('App Cert path'),
+      '#description' => $this->t('App Cert path'),
+      '#default_value' => isset($this->configuration['app_cert_public_key_path']) ? $this->configuration['app_cert_public_key_path'] : ''
+    ];
+
+    $form['alipay_cert_public_key_path'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Alipay cert path'),
+      '#description' => $this->t('Alipay cert path'),
+      '#default_value' => isset($this->configuration['alipay_cert_public_key_path']) ? $this->configuration['alipay_cert_public_key_path'] : ''
+    ];
+
+    $form['alipay_root_cert_path'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Alipay Root cert path'),
+      '#description' => $this->t('The Alipay Root cert path'),
+      '#default_value' => isset($this->configuration['alipay_root_cert_path']) ? $this->configuration['alipay_root_cert_path'] : ''
+    ];
+
     return $form;
   }
 
@@ -96,6 +117,9 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
       $this->configuration['app_id'] = $values['app_id'];
       $this->configuration['app_private_key_path'] = $values['app_private_key_path'];
       $this->configuration['alipay_public_key_path'] = $values['alipay_public_key_path'];
+      $this->configuration['app_cert_public_key_path'] = $values['app_cert_public_key_path'];
+      $this->configuration['alipay_cert_public_key_path'] = $values['alipay_cert_public_key_path'];
+      $this->configuration['alipay_root_cert_path'] = $values['alipay_root_cert_path'];
     }
   }
 
@@ -220,24 +244,14 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
   }
 
   public function requestRedirectUrl($commerce_order, &$payment) {
-
-    $client_type = $this->getConfiguration()['client_type'];
-    if ($client_type !== self::CLIENT_TYPE_WEBSITE) {
-      throw new \Exception('requestQRCode only support [' . self::CLIENT_TYPE_WEBSITE . '] client type.');
-    }
-
-    $request = $this->getOmniGateway('Alipay_AopPage')->purchase();
-
-    $payment = $this->createPayment($commerce_order);
+    require_once __DIR__ . '/../../../../alipay_sdks/alipay-sdk-PHP-4.2.0/aop/request/AlipayTradePagePayRequest.php';
+    $request = new \AlipayTradePagePayRequest();
     $data = [
       'product_code' => 'FAST_INSTANT_TRADE_PAY'
     ];
-    $request->setBizContent($this->getBizContent($commerce_order, $payment, $data));
-
-    /** @var \Omnipay\Alipay\Responses\AopTradePreCreateResponse $response */
-    $response = $request->send();
-
-    return $response->getRedirectUrl();
+    $payment = $this->createPayment($commerce_order);
+    $request->setBizContent(json_encode($this->getBizContent($commerce_order, $payment, $data)));
+    return $this->getAopCertClient()->pageExecute($request, 'GET');
   }
 
   /**
@@ -326,5 +340,33 @@ class Alipay extends OffsitePaymentGatewayBase implements SupportsRefundsInterfa
       'out_trade_no' => $commerce_order->id() . '-' . $payment->id() . '-' .date('YmdHis') . mt_rand(1000, 9999), // 商户网站唯一订单号
       'total_amount' => $total_fee
     ];
+  }
+
+  /**
+   * 参考 alipay_sdks/alipay-sdk-PHP-4.2.0
+   * @return \AopCertClient
+   */
+  private function getAopCertClient() {
+    require_once __DIR__ . '/../../../../alipay_sdks/alipay-sdk-PHP-4.2.0/aop/AopCertClient.php';
+    require_once __DIR__ . '/../../../../alipay_sdks/alipay-sdk-PHP-4.2.0/aop/AopCertification.php';
+
+    $aop = new \AopCertClient ();
+    $appCertPath = $this->getConfiguration()['app_cert_public_key_path'];
+    $alipayCertPath = $this->getConfiguration()['alipay_cert_public_key_path'];
+    $rootCertPath = $this->getConfiguration()['alipay_root_cert_path'];
+
+    $aop->gatewayUrl = 'https://openapi.alipay.com/gateway.do';
+    $aop->appId = $this->getConfiguration()['app_id'];
+    $aop->rsaPrivateKey = file_get_contents($this->getConfiguration()['app_private_key_path']);
+    $aop->alipayrsaPublicKey = $aop->getPublicKey($alipayCertPath);
+    $aop->apiVersion = '1.0';
+    $aop->signType = 'RSA2';
+    $aop->postCharset='utf-8';
+    $aop->format='json';
+    $aop->isCheckAlipayPublicCert = true;//是否校验自动下载的支付宝公钥证书，如果开启校验要保证支付宝根证书在有效期内
+    $aop->appCertSN = $aop->getCertSN($appCertPath);//调用getCertSN获取证书序列号
+    $aop->alipayRootCertSN = $aop->getRootCertSN($rootCertPath);//调用getRootCertSN获取支付宝根证书序列号
+
+    return $aop;
   }
 }

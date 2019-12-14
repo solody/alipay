@@ -8,7 +8,9 @@ use Drupal\commerce_payment\Entity\Payment;
 use Drupal\Core\Form\FormStateInterface;
 use Com\Tecnick\Barcode\Barcode;
 use Drupal\Core\Render\Markup;
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * @link https://github.com/lokielse/omnipay-alipay/wiki/Aop-Face-To-Face-Gateway
@@ -36,14 +38,11 @@ class QRCodePaymentForm extends BasePaymentOffsiteForm {
 
     if ($client_type === AlipayGatewayInterface::CLIENT_TYPE_WEBSITE) {
       $redirect_url = $payment_gateway_plugin->requestRedirectUrl($order, $payment_entity);
-      $redirect_method = 'GET';
-      $data = [
-        'return' => $form['#return_url'],
-        'cancel' => $form['#cancel_url'],
-        'total' => $payment->getAmount()->getNumber(),
+      $form['link'] = [
+        '#type' => 'markup',
+        '#markup' => $redirect_url
       ];
-
-      $form = $this->buildRedirectForm($form, $form_state, $redirect_url, $data, $redirect_method);
+      $this->buildRedirectForm($form, $form_state, $redirect_url, []);
     } elseif ($client_type === AlipayGatewayInterface::CLIENT_TYPE_FACE_TO_FACE) {
 
       try {
